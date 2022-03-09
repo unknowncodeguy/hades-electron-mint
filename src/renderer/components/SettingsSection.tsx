@@ -4,8 +4,18 @@ import path from 'path';
 import Discord from 'discord.js';
 import moment from 'moment';
 import { CircularBorderDiv, CustomButton, CustomInputLabel, CustomTextField } from './helper/CustomHtml';
-import { Alert, Snackbar } from '@mui/material';
+import { Alert, AppBar, Divider, DialogActions, DialogContent, FormHelperText, Grid, IconButton, Paper, Snackbar, Toolbar, Tooltip, Typography } from '@mui/material';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import AddBoxIcon from '@mui/icons-material/AddBox';
 import { createWebhookMessage } from './helper/Discord';
+
+import { 
+    darkModePrimary,
+    darkModeSecondary,
+    lightModePrimary,
+    lightModeSecondary,
+    secondaryColor
+} from './helper/Constants';
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 var settingsPath = '';
@@ -44,11 +54,13 @@ export default function SettingsSection() {
         setDiscordWebhookValue(settingsJsonData.discordWebhookUrl);
     }, []);
 
-    const updateRpcUrlValue = (rpcUrl: any) => {
-        settings.rpcUrl = rpcUrl;
+    const updateRpcUrlValue = () => {
+        settings.rpcUrl = rpcUrlValue;
         const updatedSettings = settings;
 
         saveSettings(updatedSettings);
+        setShowAlert(true);
+        setAlertMessageValue('RPC Url is changed.')
     }
 
     const updateDiscordWebhookValue = (discordWebhookUrl: any) => {
@@ -64,24 +76,66 @@ export default function SettingsSection() {
     }
 
     return (
-        <div style={{ width: '100%' }}>
-            <div className="formControl" style={{ flex: 1, display: 'flex' }}>
-                <div style={{ flex: 0.475 }}>
-                    <CustomInputLabel title={undefined} style={undefined}>RPC Url</CustomInputLabel>
+        <>
+            <AppBar elevation={0} position="static" style={{ backgroundColor: darkModePrimary, marginBottom: '15px' }}>
+                <Toolbar style={{ paddingLeft: '0px' }}>
+                    <div style={{ flexDirection: 'column', display: 'flex' }}>
+                        <Typography variant={'h4'}>Settings</Typography>
+                    </div>
+                </Toolbar>
+                <Divider style={{ backgroundColor: secondaryColor, height: '2px' }} />
+            </AppBar>
+
+            <Grid container direction="row" justifyContent="center" alignItems="center" spacing={3}>
+                <Grid item md={1}></Grid>
+
+                <Grid item md={2}>
+                    <Typography variant="h6" sx={{color: darkModeSecondary}}>
+                        RPC Url
+                    </Typography>
+                </Grid>
+
+                <Grid item md={6}>
                     <CircularBorderDiv style={undefined}>
                         <CustomTextField
                             value={rpcUrlValue}
-                            onChange={(event: { target: { value: any; }; }) => {
-                                return setRpcUrlValue(event.target.value);
-                            } }
-                            onBlur={(event: { target: { value: any; }; }) => updateRpcUrlValue(event.target.value)}
-                            style={{ fontSize: '13px' }}
-                            maxLength={500} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
+                            onChange = {(event: { target: { value: any; }; }) => {
+                                setRpcUrlValue(event.target.value);
+                            }}
+                            onKeyPress={undefined}
+                            style={undefined}
+                            onBlur = {(event: { target: { value: any; }; }) => {
+                                setRpcUrlValue(event.target.value);
+                            }}
+                            startAdornment={undefined} 
+                            endAdornment={undefined} 
+                            disabled={false}
+                        />
                     </CircularBorderDiv>
-                </div>
-                <div style={{ flex: 0.05 }} />
-                <div style={{ flex: 0.475 }}>
-                    <CustomInputLabel title={undefined} style={undefined}>Discord Webhook</CustomInputLabel>
+                </Grid>
+
+                <Grid item md={2}>
+                    <CustomButton
+                        onClick={() => {
+                            updateRpcUrlValue();
+                        }}
+                        variant={undefined} width={undefined} height={undefined} fontSize={undefined} style={undefined}
+                    >
+                        Change Rpc url
+                    </CustomButton>    
+                </Grid>
+
+                <Grid item md={1}></Grid>
+
+                <Grid item md={1}></Grid>
+
+                <Grid item md={2}>
+                    <Typography variant="h6" sx={{color: darkModeSecondary}}>
+                            Discord Webhook
+                    </Typography>
+                </Grid>
+
+                <Grid item md={6}>
                     <CircularBorderDiv style={undefined}>
                         <CustomTextField
                             value={discordWebhookValue}
@@ -90,29 +144,45 @@ export default function SettingsSection() {
                             style={{ fontSize: '13px' }}
                             maxLength={500} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
                     </CircularBorderDiv>
+                </Grid>
+
+                <Grid item md={2}>
                     <CustomButton
                         onClick={async () => { 
-                            const res = await createWebhookMessage('Test Webhook', [], '', '#FFFFFF', discordWebhookValue);
+                            try{
+                                const res = await createWebhookMessage('Test Webhook', [], '', '#FFFFFF', discordWebhookValue);
 
-                            if (res) {
-                                setAlertTypeValue("success");
-                                setAlertMessageValue("Webhook testing");
-                            } else {
+                                if (res) {
+                                    setAlertTypeValue("success");
+                                    setAlertMessageValue("Webhook testing");
+                                } else {
+                                    setAlertTypeValue("error");
+                                    setAlertMessageValue("Error sending webhook");
+                                }
+                            }
+                            catch{
                                 setAlertTypeValue("error");
                                 setAlertMessageValue("Error sending webhook");
                             }
-
-                            setShowAlert(true);
+                            finally{
+                                setShowAlert(true);
+                            }
                         }}
                         variant={undefined} width={undefined} height={undefined} fontSize={undefined} style={undefined}
-                    >Test Webhook</CustomButton>
-                </div>
-            </div>
+                    >
+                        Test Webhook
+                    </CustomButton>
+                </Grid>
+
+                <Grid item md={1}></Grid>
+            </Grid>  
+
             <Snackbar open={showAlert} autoHideDuration={3000} onClose={() => setShowAlert(false)}>
                 <Alert elevation={6} variant='filled' color={alertTypeValue}>
                     {alertMessageValue}
                 </Alert>
-            </Snackbar>
-        </div>
+            </Snackbar>  
+        </>
+
     )
 }

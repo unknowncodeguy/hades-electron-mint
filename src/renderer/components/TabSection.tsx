@@ -19,12 +19,19 @@ const MuiTabs = withStyles({
     }
 })(Tabs);
 
-const useStyles = makeStyles((theme: any) => 
+const useStyles = makeStyles(() => 
     createStyles({
+        root: {},
         tabStyle: {
             alignItems: `flex-start`,
-            `&:hover` : {
-                coloe: `red`
+            '&:hover': {
+                textShadow: `0px 0px 4px white`
+            }
+        },
+        socialIcon: {
+            transition: `all .3s`,
+            '&:hover': {
+                transform: `scale(1.2)`
             }
         }
     })
@@ -86,19 +93,39 @@ export default function TabSection({ windowHeight, setTabName } : { windowHeight
             orientation="vertical"
             sx={{ borderRight: 0, borderColor: 'divider', backgroundColor: secondaryColor, borderRadius: '8px', margin: '15px' }}
           >
-            <Tab className={`${classes.tabStyle}`} label={<div style={{ textTransform: 'none', color: headerTabsValue === 0 ? thirdColor : darkModeSecondary }}><QueueIcon style={{ verticalAlign: 'middle', width: '20px', height: '20px' }} /> Tasks</div>} style={{ color: darkModeSecondary, fontSize: '25px' }} />
-            <Tab className={`${classes.tabStyle}`} label={<div style={{ textTransform: 'none', color: headerTabsValue === 1 ? thirdColor : darkModeSecondary }}><AccountBalanceWalletIcon style={{ verticalAlign: 'middle', width: '20px', height: '20px' }} /> Wallets</div>} style={{ color: darkModeSecondary, fontSize: '25px' }} />
-            <Tab className={`${classes.tabStyle}`} label={<div style={{ textTransform: 'none', color: headerTabsValue === 2 ? thirdColor : darkModeSecondary }}><SettingsIcon style={{ verticalAlign: 'middle', width: '20px', height: '20px' }} /> Settings</div>} style={{ color: darkModeSecondary, fontSize: '25px' }} />
+            <Tab 
+                className={`${classes.tabStyle}`} 
+                label={
+                    <div className={`d-flex align-items-center justify-content-between`} style={{ textTransform: 'none', color: headerTabsValue === 0 ? thirdColor : darkModeSecondary }}>
+                        <QueueIcon style={{ verticalAlign: 'middle'}} /> 
+                        <Typography variant='h6' component={`span`} className={`ml-8`}>Tasks</Typography>
+                    </div>} 
+                style={{ color: darkModeSecondary}}
+            />
+            <Tab 
+                className={`${classes.tabStyle}`} 
+                label={<div className={`d-flex align-items-center justify-content-between`} style={{ textTransform: 'none', color: headerTabsValue === 1 ? thirdColor : darkModeSecondary }}>
+                        <AccountBalanceWalletIcon style={{ verticalAlign: 'middle'}} /> 
+                        <Typography variant='h6' component={`span`} className={`ml-8`}>Wallets</Typography>
+                     </div>} 
+                style={{ color: darkModeSecondary}} />
+            <Tab 
+                className={`${classes.tabStyle}`} 
+                label={<div className={`d-flex align-items-center justify-content-between`} style={{ textTransform: 'none', color: headerTabsValue === 2 ? thirdColor : darkModeSecondary }}>
+                    <SettingsIcon style={{ verticalAlign: 'middle'}} /> 
+                    <Typography variant='h6' component={`span`} className={`ml-8`}>Settings</Typography>
+                    </div>} 
+                style={{ color: darkModeSecondary}} />
             <div style={{ height: windowHeight - 320 }} />
             <div style={{ textAlign: 'center' }}>
                 <Tooltip title="Twitter">
                     <IconButton onClick={() => shell.openExternal(twitterUrl)} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
-                        <TwitterIcon style={{ width: '20px', height: '20px' }} />
+                        <TwitterIcon style={{ width: '20px', height: '20px' }} className={`${classes.socialIcon}`}/>
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Website">
                     <IconButton onClick={() => shell.openExternal(websiteUrl)} color="inherit" className="notDraggable" style={{ color: darkModeSecondary, marginRight: '10px' }}>
-                        <LanguageIcon style={{ width: '20px', height: '20px' }} />
+                        <LanguageIcon style={{ width: '20px', height: '20px' }} className={`${classes.socialIcon}`}/>
                     </IconButton>
                 </Tooltip>
             </div>

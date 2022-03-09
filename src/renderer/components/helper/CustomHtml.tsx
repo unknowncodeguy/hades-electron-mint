@@ -19,7 +19,7 @@ export function CircularBorderDiv(props: { children: any; style: any; }) {
 }
 
 export function CustomTextField(props: { onChange: any; onBlur: any; onKeyPress: any; value: any; startAdornment: any; endAdornment: any; disabled: any; padding?: "10px" | undefined; isPassword?: false | undefined; placeholder?: "" | undefined; fullWidth?: true | undefined; style: any; maxLength?: number | undefined; multiline?: false | boolean; label?: "" | undefined; }) {
-  const { onChange, onBlur, onKeyPress, value, startAdornment, endAdornment, disabled, padding = '10px', isPassword = false, placeholder = "", fullWidth = true, style, maxLength = 100, multiline = false, label = "" } = props;
+  const { onChange, onBlur, onKeyPress, value, startAdornment, endAdornment, disabled, padding = '10px', isPassword = false, placeholder = "", fullWidth = true, style, maxLength = 400, multiline = false, label = "" } = props;
   return (
     <TextField
       type={isPassword ? "password" : "text"}
@@ -37,8 +37,6 @@ export function CustomTextField(props: { onChange: any; onBlur: any; onKeyPress:
         style: {
           color: darkModeSecondary,
           borderColor: darkModeSecondary,
-          paddingLeft: '10px',
-          padding: padding,
           ...style
         },
         startAdornment: (
@@ -49,6 +47,7 @@ export function CustomTextField(props: { onChange: any; onBlur: any; onKeyPress:
         )
       }}
       label={label}
+      size="small"
     />
   )
 }

@@ -13,6 +13,8 @@ function createWindow() {
     height: 768,
     minWidth: 1366,
     minHeight: 768,
+    maxWidth: 1920,
+    maxHeight: 1080,
     icon: path.join(__dirname, '../static/hades-logo.png'),
     webPreferences: {
       nodeIntegration: true,
@@ -23,7 +25,7 @@ function createWindow() {
   });
 
   if (process.env.NODE_ENV === "development") {
-    mainWindow.loadURL("http://localhost:4000");
+    mainWindow.loadURL("http://127.0.0.1:4000");
   } else {
     mainWindow.loadURL(
       url.format({
@@ -49,6 +51,10 @@ function createWindow() {
 
   ipcMain.on('minimize', () => {
     mainWindow.minimize();
+  });
+
+  ipcMain.on('maximize', () => {
+    mainWindow.maximize();
   });
 
   ipcMain.on('close', () => {

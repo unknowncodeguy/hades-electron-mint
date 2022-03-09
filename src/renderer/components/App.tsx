@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import logo from "../../../static/hades-logo-text.png";
+import '../css/normalize.css';
+import '../css/utils.css';
+import '../css/fonts.css';
 import '../css/App.css';
 import { darkModePrimary, darkModeSecondary, secondaryColor, thirdColor, twitterUrl, websiteUrl } from './helper/Constants';
 import { AppBar, Divider, Grid, IconButton, Paper, Toolbar, Tooltip } from '@mui/material';
@@ -7,6 +10,7 @@ import TwitterIcon from '@mui/icons-material/Twitter';
 import LanguageIcon from '@mui/icons-material/LanguageOutlined';
 import RemoveIcon from '@mui/icons-material/RemoveOutlined';
 import CloseIcon from '@mui/icons-material/CloseOutlined';
+import CropSquareOutlinedIcon from '@mui/icons-material/CropSquareOutlined';
 import TabSection from './TabSection';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
@@ -66,6 +70,11 @@ function App() {
             <Tooltip title="Minimize">
               <IconButton onClick={() => ipcRenderer.send('minimize')} color="inherit" className="notDraggable" style={{ color: darkModeSecondary, marginLeft: '10px' }}>
                 <RemoveIcon style={{ width: '20px', height: '20px' }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Maximize">
+              <IconButton onClick={() => ipcRenderer.send('maximize')} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
+                <CropSquareOutlinedIcon style={{ width: '20px', height: '20px' }} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Close">

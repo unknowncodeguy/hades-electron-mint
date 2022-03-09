@@ -2,9 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as fs from 'fs';
 import path from 'path';
 import { CircularBorderDiv, CustomButton, CustomDialog, CustomDialogTitle, CustomInputLabel, CustomTextField } from './helper/CustomHtml';
-import { Alert, AppBar, DialogActions, DialogContent, FormHelperText, Grid, IconButton, Paper, Snackbar, Toolbar, Tooltip, Typography } from '@mui/material';
+import { 
+    darkModePrimary,
+    darkModeSecondary,
+    lightModePrimary,
+    lightModeSecondary,
+    secondaryColor,
+    thirdColor
+} from './helper/Constants';
+import { Alert, AppBar, DialogActions, DialogContent, FormHelperText, Divider, Grid, IconButton, Paper, Snackbar, Toolbar, Tooltip, Typography , Backdrop, CircularProgress} from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { darkModePrimary, darkModeSecondary, lightModeSecondary, thirdColor } from './helper/Constants';
 import solanalogo from "../../../static/solana-logo.png";
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -58,6 +66,8 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
     const [alertTypeValue, setAlertTypeValue] = React.useState<any>("");
     const [alertMessageValue, setAlertMessageValue] = React.useState("");
 
+    const [loading, setLoading] = React.useState(false);
+
     const validateAddWallet = () => {
         return isPrivateKeyValid && walletNameValue !== "";
     }
@@ -74,7 +84,7 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
         <CustomDialog
           open={open}
           onClose={() => onClose()}
-          style={{ width: '800px' }}
+          style={{ width: '800px', border: `solid 1px white`}}
         >
             <CustomDialogTitle
                 onClick={() => onClose()}
@@ -82,8 +92,12 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
                 Add Solana Wallet
             </CustomDialogTitle>
             <DialogContent>
-                <div className="formControl" style={{ flex: 1, display: 'flex' }}>
-                    <div style={{ flex: 0.475 }}>
+                <Grid container direction="row" alignItems={`center`} justifyContent={`space-between`} spacing={3}>
+                    <Grid item md={3}>
+
+                    </Grid>
+
+                    <Grid item md={6}>
                         <CustomInputLabel title={undefined} style={undefined}>Wallet Name*</CustomInputLabel>
                         <CircularBorderDiv style={undefined}>
                             <CustomTextField
@@ -93,9 +107,17 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
                                 } }
                                 style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
                         </CircularBorderDiv>
-                    </div>
-                    <div style={{ flex: 0.05 }} />
-                    <div style={{ flex: 0.475 }}>
+                    </Grid>
+
+                    <Grid item md={3}>
+
+                    </Grid>
+
+                    <Grid item md={3}>
+
+                    </Grid>
+
+                    <Grid item md={6}>
                         <CustomInputLabel title={undefined} style={undefined}>Private key (leave blank to generate new wallet)</CustomInputLabel>
                         <CircularBorderDiv style={undefined}>
                             <CustomTextField
@@ -108,7 +130,7 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
                                     }
                                 } }
                                 multiline={true}
-                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
+                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined}/>
                         </CircularBorderDiv>
                         {!isPrivateKeyValid &&
                             <FormHelperText
@@ -117,14 +139,20 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
                                 Incorrect format!
                             </FormHelperText>
                         }
-                    </div>
-                </div>
+                    </Grid>
+
+                    <Grid item md={3}>
+
+                    </Grid>
+                    
+                </Grid>
             </DialogContent>
             <DialogActions>
                 <CustomButton onClick={() => onClose()} variant={undefined} width={undefined} height={undefined} fontSize={undefined} style={undefined}>Cancel</CustomButton>
                 <CustomButton
                     onClick={async () => {
                         if (validateAddWallet()) {
+                            setLoading(true);
                             const walletDetails = await getWalletDetails(privateKeyValue);
                             if (walletDetails != null) {
                                 addWallet(walletNameValue, privateKeyValue, walletDetails.address, walletDetails.balance);
@@ -140,6 +168,7 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
                             setAlertMessageValue("Empty wallet name or invalid private key!");
                         }
                         setShowAlert(true);
+                        setLoading(false);
                     } } variant={undefined} width={undefined} height={undefined} fontSize={undefined} style={undefined}>
                     Add Wallet
                 </CustomButton>
@@ -149,6 +178,12 @@ function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, ope
                     {alertMessageValue}
                 </Alert>
             </Snackbar>
+            <Backdrop
+                sx={{ color: '#fff', zIndex: 9 }}
+                open={loading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
         </CustomDialog>
     );
 }
@@ -241,8 +276,10 @@ export default function WalletSection() {
     return (
         <React.Fragment>
             <AppBar position="static" style={{ backgroundColor: darkModePrimary, marginBottom: '15px' }}>
-                <Toolbar>
-                    <Typography>{wallets.length} Wallet{wallets.length > 1 ? "s" : ""}</Typography>
+                <Toolbar style={{ paddingLeft: '0px' }}>
+                    <div style={{ flexDirection: 'column', display: 'flex' }}>
+                        <Typography variant={'h4'}>Wallets</Typography>
+                    </div>
                     <Grid item xs />
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {}} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
@@ -251,10 +288,12 @@ export default function WalletSection() {
                     </Tooltip>
                     <Tooltip title="Add Wallet">
                         <IconButton onClick={() => setAddSolanaWalletOpen(true)} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
-                            <AddBoxIcon />
+                            <AddCircleOutlineIcon />
                         </IconButton>
                     </Tooltip>
                 </Toolbar>
+                <Divider style={{ backgroundColor: secondaryColor, height: '2px' }} />
+                <Typography component={'span'} style={{ fontSize: '13px', marginLeft: '10px' }}>{wallets.length} Wallet{wallets.length > 1 ? "s" : ""}</Typography>
             </AppBar>
             <WalletList wallets={wallets} deleteWallet={(id: any) => deleteWallet(id)} />
             <AddSolanaWalletDialog open={addSolanaWalletOpen} onClose={() => { setAddSolanaWalletOpen(false) }} addWallet={(walletName: any, privateKey: any, address: any, balance: any) => addWallet(walletName, privateKey, address, balance)} />
@@ -263,6 +302,7 @@ export default function WalletSection() {
                     {alertMessageValue}
                 </Alert>
             </Snackbar>
+
         </React.Fragment>
     )
 }

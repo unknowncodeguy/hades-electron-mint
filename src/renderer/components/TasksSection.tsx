@@ -10,9 +10,11 @@ import { CircularBorderDiv, CustomButton, CustomDialog, CustomDialogTitle, Custo
 
 import * as fs from 'fs';
 import path from 'path';
-import { Alert, AppBar, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Paper, Snackbar, Table, TableBody, TableContainer, TableHead, TableRow, Toolbar, Tooltip, Typography } from '@mui/material';
+import { Alert, AppBar, DialogActions, DialogContent, Divider, Grid, IconButton, MenuItem, Paper, Snackbar, Table, TableBody, TableContainer, TableHead, TableRow, Toolbar, Tooltip, Typography, Backdrop, CircularProgress} from '@mui/material';
+import { withStyles, makeStyles, createStyles } from '@mui/styles';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import PlayArrowIcon from '@mui/icons-material/PlayArrowOutlined';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -22,6 +24,19 @@ import { createWebhookMessage } from './helper/Discord';
 import { styled } from '@mui/styles';
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
+
+const useStyles = makeStyles(() => 
+    createStyles({
+        root: {},
+        actionButton: {
+            transition: `all .3s`,
+            '&:hover': {
+                transform: `scale(1.2)`
+            }
+        }
+    })
+);
+
 var tasksPath = '';
 var walletsPath = '';
 var settingsPath = ''
@@ -118,16 +133,43 @@ async function startTask(wallets: any[], settings: { rpcUrl: any; discordWebhook
     if (walletArray.length > 0) {
         const privateKeyFromWallet = walletArray[0].privateKey;
 
-        const txn = await mintToken(platform, cmid, settings.rpcUrl, isDevelopment, privateKeyFromWallet);
-        console.log(`txn: ${txn}`);
-        if (txn && txn.length > 0 && txn !== null && txn !== undefined) {
-            await createWebhookMessage('Mint Response', [{ key: "txn", value: `https://solscan.io/tx/${txn[0]}${isDevelopment ? '?cluster=devnet' : ''}` }], "", "#FFFFFF", settings.discordWebhookUrl);
-        } else {
-            await createWebhookMessage('Mint Failed!', [], "", "#FFFFFF", settings.discordWebhookUrl);
+        try{
+            const txn = await mintToken(platform, cmid, settings.rpcUrl, isDevelopment, privateKeyFromWallet);
+
+            if (txn && txn.length > 0 && txn !== null && txn !== undefined) {
+                await createWebhookMessage('Mint Response', [{ key: "txn", value: `https://solscan.io/tx/${txn[0]}${isDevelopment ? '?cluster=devnet' : ''}` }], "", "#FFFFFF", settings.discordWebhookUrl);
+    
+                return {
+                    state: true,
+                    msg: `Mint successed, Please check your collectibles.`
+                };
+            } else {
+                await createWebhookMessage('Mint Failed! Please Retry again.', [], "", "#FFFFFF", settings.discordWebhookUrl);
+    
+                return {
+                    state: false,
+                    msg: `Mint Failed! Please retry again.`
+                };
+            }
         }
+        catch(err) {
+            return {
+                state: false,
+                msg: `Mint Failed! Please retry again.`
+            };
+        }
+        finally{
+
+        }
+
     } else {
         // Problem: Can't find wallet!
         await createWebhookMessage('Wallet not found!', [], "", "#FFFFFF", settings.discordWebhookUrl);
+
+        return {
+            state: true,
+            msg: `Wallet not found!`
+        };
     }
 }
 
@@ -157,7 +199,7 @@ function AddTaskDialog({ onClose, open, wallets, addTask } : { onClose: any, ope
         <CustomDialog
           open={open}
           onClose={() => onClose()}
-          style={{ width: '800px' }}
+          style={{ width: '800px', border: `solid 1px white`}}
         >
             <CustomDialogTitle
                 onClick={() => onClose()}
@@ -186,7 +228,7 @@ function AddTaskDialog({ onClose, open, wallets, addTask } : { onClose: any, ope
                             <CustomTextField
                                 value={cmidValue}
                                 onChange={(event: { target: { value: React.SetStateAction<string>; }; }) => setCmidValue(event.target.value)}
-                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
+                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined}/>
                         </CircularBorderDiv>
                     </div>
                     <div style={{ flex: 0.05 }} />
@@ -276,7 +318,7 @@ function EditTaskDialog({ onClose, open, wallets, rowItem, editTask } : { onClos
         <CustomDialog
           open={open}
           onClose={() => onClose()}
-          style={{ width: '800px' }}
+          style={{ width: '800px', border: `solid 1px white`}}
         >
             <CustomDialogTitle
                 onClick={() => onClose()}
@@ -305,7 +347,7 @@ function EditTaskDialog({ onClose, open, wallets, rowItem, editTask } : { onClos
                             <CustomTextField
                                 value={cmidValue}
                                 onChange={(event: { target: { value: React.SetStateAction<string>; }; }) => setCmidValue(event.target.value)}
-                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
+                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined}/>
                         </CircularBorderDiv>
                     </div>
                     <div style={{ flex: 0.05 }} />
@@ -352,25 +394,26 @@ function EditTaskDialog({ onClose, open, wallets, rowItem, editTask } : { onClos
 }
 
 function TaskTable({ windowHeight, tasks, wallets, settings, openEditTask, duplicateTask, deleteTask }: { windowHeight: any, tasks: any, wallets: any, settings: any, openEditTask: any, duplicateTask: any, deleteTask: any }) {
+    const classes = useStyles();
+    const [alertTypeValue, setAlertTypeValue] = React.useState<any>("");
+    const [alertMessageValue, setAlertMessageValue] = React.useState("");
+    const [showAlert, setShowAlert] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
     return (
         <React.Fragment>
-            <TableContainer elevation={0} style={{ backgroundColor: 'transparent', height: '40px', overflow: 'hidden' }} component={Paper}>
-                <Table>
-                    {tasks.length > 0 && 
+            <TableContainer elevation={0} style={{ maxHeight: windowHeight - 270, backgroundColor: 'transparent'}} component={Paper}>
+                <Table style={{ borderCollapse: 'separate', borderSpacing: '0px 5px' }}>
+                {tasks.length > 0 && 
                         <TableHead sx={{ backgroundColor: darkModePrimary }}>
                             <TableRow style={{ border: 0 }}>
                                 <StyledTableCell>Platform</StyledTableCell>
                                 <StyledTableCell>CMID</StyledTableCell>
                                 <StyledTableCell>Wallet</StyledTableCell>
                                 <StyledTableCell>Status</StyledTableCell>
-                                <StyledTableCell>Actions</StyledTableCell>
+                                <StyledTableCell style={{width: `20%`}}>Actions</StyledTableCell>
                             </TableRow>
                         </TableHead>
                     }
-                </Table>
-            </TableContainer>
-            <TableContainer elevation={0} style={{ maxHeight: windowHeight - 270, backgroundColor: 'transparent'}} component={Paper}>
-                <Table style={{ borderCollapse: 'separate', borderSpacing: '0px 5px' }}>
                     <TableBody>
                         {tasks.map((row: { id?: any; platform: any; cmid: any; walletId: any; }) => (
                             <StyledTableRow key={row.id} sx={{ backgroundColor: secondaryColor, border: 0 }}>
@@ -379,17 +422,30 @@ function TaskTable({ windowHeight, tasks, wallets, settings, openEditTask, dupli
                                 <StyledTableCell>{wallets.filter((x: { id: any; }) => x.id === row.walletId).length > 0 ? wallets.filter((x: { id: any; }) => x.id === row.walletId)[0].walletName : ''}</StyledTableCell>
                                 <StyledTableCell>Idle</StyledTableCell>
                                 {wallets.filter((x: { id: any; }) => x.id === row.walletId).length > 0 &&
-                                    <StyledTableCell>
-                                        <IconButton onClick={async () => await startTask(wallets, settings, row)} color="inherit" className="notDraggable" style={{ color: lightModePrimary }}>
-                                            <PlayArrowIcon style={{ width: '20px', height: '20px' }} />
+                                    <StyledTableCell style={{width: `20%`}}>
+                                        <IconButton onClick={
+                                            async () => {
+                                                setLoading(true);
+                                                const res = await startTask(wallets, settings, row);
+                                                setAlertTypeValue("error");
+                                                if(res.state) {
+                                                    setAlertTypeValue("success");
+                                                }
+                                                setAlertMessageValue(res.msg ? res.msg : `Unexpected error!`);
+                                                setShowAlert(true);
+                                                setLoading(false);
+                                            }
+                                        } 
+                                            color="inherit" className={`notDraggable ${classes.actionButton}`} style={{ color: lightModePrimary, paddingLeft: 0}}>
+                                            <PlayCircleOutlineIcon style={{ width: '20px', height: '20px' }} />
                                         </IconButton>
-                                        <IconButton onClick={async () => openEditTask(row)} color="inherit" className="notDraggable" style={{ color: lightModePrimary }}>
+                                        <IconButton onClick={async () => openEditTask(row)} color="inherit" className={`notDraggable ${classes.actionButton}`} style={{ color: lightModePrimary }}>
                                             <EditIcon style={{ width: '20px', height: '20px' }} />
                                         </IconButton>
-                                        <IconButton onClick={async () => duplicateTask(row.id)} color="inherit" className="notDraggable" style={{ color: lightModePrimary }}>
+                                        <IconButton onClick={async () => duplicateTask(row.id)} color="inherit" className={`notDraggable ${classes.actionButton}`} style={{ color: lightModePrimary }}>
                                             <ContentCopyIcon style={{ width: '20px', height: '20px' }} />
                                         </IconButton>
-                                        <IconButton onClick={() => deleteTask(row.id)} color="inherit" className="notDraggable" style={{ color: lightModePrimary }}>
+                                        <IconButton onClick={() => deleteTask(row.id)} color="inherit" className={`notDraggable ${classes.actionButton}`} style={{ color: lightModePrimary }}>
                                             <DeleteIcon style={{ width: '20px', height: '20px' }} />
                                         </IconButton>
                                     </StyledTableCell>
@@ -399,6 +455,19 @@ function TaskTable({ windowHeight, tasks, wallets, settings, openEditTask, dupli
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <Backdrop
+                sx={{ color: '#fff', zIndex: 9 }}
+                open={loading}
+            >
+                <CircularProgress color="inherit" />
+            </Backdrop>
+
+            <Snackbar open={showAlert} autoHideDuration={3000} onClose={() => setShowAlert(false)}>
+                <Alert severity={alertTypeValue}>
+                    {alertMessageValue}
+                </Alert>
+            </Snackbar>
         </React.Fragment>
     )
 }
@@ -413,6 +482,8 @@ export default function TasksSection({ windowHeight } : { windowHeight: any }) {
     const [addTaskDialogOpen, setAddTaskDialogOpen] = React.useState(false);
     const [editTaskDialogOpen, setEditTaskDialogOpen] = React.useState(false);
     const [editRowItem, setEditRowItem] = React.useState({} as any);
+
+    const classes = useStyles();
 
     useEffect(() => {
         let tasksRawData = fs.readFileSync(tasksPath);
@@ -508,7 +579,7 @@ export default function TasksSection({ windowHeight } : { windowHeight: any }) {
                         <Typography variant={'h4'}>Tasks</Typography>
                     </div>
                     <Grid item xs />
-                    <Tooltip title="Test">
+                    {/* <Tooltip title="Test">
                         <IconButton
                             onClick={async () => {
                                 const medetails = await ME_AccountInfo();
@@ -523,10 +594,10 @@ export default function TasksSection({ windowHeight } : { windowHeight: any }) {
                         >
                             <AddCircleOutlineIcon />
                         </IconButton>
-                    </Tooltip>
+                    </Tooltip> */}
                     <Tooltip title="Add Task">
                         <IconButton onClick={() => setAddTaskDialogOpen(true)} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
-                            <AddCircleOutlineIcon />
+                            <AddCircleOutlineIcon className={`${classes.actionButton}`}/>
                         </IconButton>
                     </Tooltip>
                 </Toolbar>
