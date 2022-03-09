@@ -7,7 +7,7 @@ import HttpsProxyAgent from "https-proxy-agent";
 import { getCandyMachineMEState, mintOneMEToken } from './candy-machine-me';
 
 const magicEdenApiUrl = 'https://api-mainnet.magiceden.io';
-const metaplexDevRpcUrl = 'https://summer-delicate-snow.solana-devnet.quiknode.pro/3549cfe2d5426832a2fd475f4125fe4e38eed905/';
+const metaplexDevRpcUrl = 'https://metaplex.devnet.rpcpool.com/';
 
 export function VerifyPrivateKey(privateKey: any) {
     try {
@@ -88,7 +88,7 @@ export async function MintToken(candyMachineId: any, rpcUrl: any, isDevelopment:
         const fromWallet = new anchor.Wallet(fromKeypair);
 
         const candyMachine = await CandyMachine(fromWallet, candyMachineId, rpcUrl, isDevelopment);
-       
+        console.log('c', candyMachine);
         if (candyMachine !== null) {
             if (candyMachine.state.isActive && !candyMachine.state.isSoldOut) {
                 const candyMachineId = new web3.PublicKey(candyMachine.id);

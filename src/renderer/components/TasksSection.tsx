@@ -132,10 +132,10 @@ async function startTask(wallets: any[], settings: { rpcUrl: any; discordWebhook
     const walletArray = wallets.filter((x: { id: any; }) => x.id === walletId);
     if (walletArray.length > 0) {
         const privateKeyFromWallet = walletArray[0].privateKey;
-
+        
         try{
             const txn = await mintToken(platform, cmid, settings.rpcUrl, isDevelopment, privateKeyFromWallet);
-
+            
             if (txn && txn.length > 0 && txn !== null && txn !== undefined) {
                 await createWebhookMessage('Mint Response', [{ key: "txn", value: `https://solscan.io/tx/${txn[0]}${isDevelopment ? '?cluster=devnet' : ''}` }], "", "#FFFFFF", settings.discordWebhookUrl);
     
@@ -153,6 +153,7 @@ async function startTask(wallets: any[], settings: { rpcUrl: any; discordWebhook
             }
         }
         catch(err) {
+            console.log('e', err)
             return {
                 state: false,
                 msg: `Mint Failed! Please retry again.`
@@ -207,8 +208,8 @@ function AddTaskDialog({ onClose, open, wallets, addTask } : { onClose: any, ope
                 Add Task
             </CustomDialogTitle>
             <DialogContent>
-                <div className="formControl" style={{ flex: 1, display: 'flex' }}>
-                    <div style={{ flex: 0.3 }}>
+                <div className="formControl justify-content-between" style={{ flex: 1, display: 'flex' }}>
+                    <div style={{ flex: 0.2 }}>
                         <CustomInputLabel title={undefined} style={undefined}>Platform*</CustomInputLabel>
                         <CircularBorderDiv style={undefined}>
                             <CustomSelect
@@ -221,8 +222,8 @@ function AddTaskDialog({ onClose, open, wallets, addTask } : { onClose: any, ope
                             </CustomSelect>
                         </CircularBorderDiv>
                     </div>
-                    <div style={{ flex: 0.05 }} />
-                    <div style={{ flex: 0.3 }}>
+                    <div style={{ flex: 0.06 }} />
+                    <div style={{ flex: 0.2 }}>
                         <CustomInputLabel title={undefined} style={undefined}>CMID*</CustomInputLabel>
                         <CircularBorderDiv style={undefined}>
                             <CustomTextField
@@ -231,8 +232,8 @@ function AddTaskDialog({ onClose, open, wallets, addTask } : { onClose: any, ope
                                 style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined}/>
                         </CircularBorderDiv>
                     </div>
-                    <div style={{ flex: 0.05 }} />
-                    <div style={{ flex: 0.3 }}>
+                    <div style={{ flex: 0.06 }} />
+                    <div style={{ flex: 0.2 }}>
                         <CustomInputLabel title={undefined} style={undefined}>Wallet*</CustomInputLabel>
                         <CircularBorderDiv style={undefined}>
                             <CustomSelect
@@ -246,20 +247,21 @@ function AddTaskDialog({ onClose, open, wallets, addTask } : { onClose: any, ope
                             </CustomSelect>
                         </CircularBorderDiv>
                     </div>
-                </div>
-                <div className="formControl" style={{ flex: 1, display: 'flex' }}>
-                    <CustomInputLabel title={undefined} style={undefined}>Qty*</CustomInputLabel>
-                    <CircularBorderDiv style={undefined}>
-                        <CustomSelect
-                            value={qtyValue}
-                            onChange={(event: { target: { value: React.SetStateAction<number>; }; }) => setQtyValue(event.target.value)}
-                            style={{ fontSize: '13px', height: '35px' }}
-                        >
-                            {[...Array.from(Array(10).keys())].filter(y => y > 0).map(x =>
-                                <MenuItem key={x} value={x} style={{ fontSize: '13px' }}>{x}</MenuItem>
-                            )}
-                        </CustomSelect>
-                    </CircularBorderDiv>
+                    <div style={{ flex: 0.06 }} />
+                    <div style={{ flex: 0.2 }}>
+                        <CustomInputLabel title={undefined} style={undefined}>Qty*</CustomInputLabel>
+                        <CircularBorderDiv style={undefined}>
+                            <CustomSelect
+                                value={qtyValue}
+                                onChange={(event: { target: { value: React.SetStateAction<number>; }; }) => setQtyValue(event.target.value)}
+                                style={{ fontSize: '13px', height: '35px' }}
+                            >
+                                {[...Array.from(Array(10).keys())].filter(y => y > 0).map(x =>
+                                    <MenuItem key={x} value={x} style={{ fontSize: '13px' }}>{x}</MenuItem>
+                                )}
+                            </CustomSelect>
+                        </CircularBorderDiv>
+                    </div>
                 </div>
             </DialogContent>
             <DialogActions>

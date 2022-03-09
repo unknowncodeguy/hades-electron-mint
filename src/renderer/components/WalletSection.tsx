@@ -11,6 +11,7 @@ import {
     thirdColor
 } from './helper/Constants';
 import { Alert, AppBar, DialogActions, DialogContent, FormHelperText, Divider, Grid, IconButton, Paper, Snackbar, Toolbar, Tooltip, Typography , Backdrop, CircularProgress} from '@mui/material';
+import { withStyles, makeStyles, createStyles } from '@mui/styles';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import solanalogo from "../../../static/solana-logo.png";
@@ -25,6 +26,18 @@ if (isDevelopment) {
 } else {
     walletsPath = process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support/Hades/wallets.json' : `${process.env.APPDATA}\\Hades\\wallets.json`;
 }
+
+const useStyles = makeStyles(() => 
+    createStyles({
+        root: {},
+        actionButton: {
+            transition: `all .3s`,
+            '&:hover': {
+                transform: `scale(1.2)`
+            }
+        }
+    })
+);
 
 // Write wallets json file.
 if (!fs.existsSync(walletsPath)) {
@@ -247,6 +260,8 @@ export default function WalletSection() {
     const [alertTypeValue, setAlertTypeValue] = React.useState<any>("");
     const [alertMessageValue, setAlertMessageValue] = React.useState("");
     const [showAlert, setShowAlert] = React.useState(false);
+
+    const classes = useStyles();
     
     useEffect(() => {
         let walletsRawData = fs.readFileSync(walletsPath);
@@ -283,12 +298,12 @@ export default function WalletSection() {
                     <Grid item xs />
                     <Tooltip title="Refresh">
                         <IconButton onClick={() => {}} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
-                            <AutorenewIcon />
+                            <AutorenewIcon className={`${classes.actionButton}`}/>
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Add Wallet">
                         <IconButton onClick={() => setAddSolanaWalletOpen(true)} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
-                            <AddCircleOutlineIcon />
+                            <AddCircleOutlineIcon className={`${classes.actionButton}`}/>
                         </IconButton>
                     </Tooltip>
                 </Toolbar>
