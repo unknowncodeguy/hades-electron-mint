@@ -1,0 +1,268 @@
+import React, { useState, useEffect, useRef } from 'react';
+import * as fs from 'fs';
+import path from 'path';
+import { CircularBorderDiv, CustomButton, CustomDialog, CustomDialogTitle, CustomInputLabel, CustomTextField } from './helper/CustomHtml';
+import { Alert, AppBar, DialogActions, DialogContent, FormHelperText, Grid, IconButton, Paper, Snackbar, Toolbar, Tooltip, Typography } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { darkModePrimary, darkModeSecondary, lightModeSecondary, thirdColor } from './helper/Constants';
+import solanalogo from "../../../static/solana-logo.png";
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import { VerifyPrivateKey, WalletDetails } from '../solana/Solana';
+
+const isDevelopment = process.env.NODE_ENV !== 'production'
+var walletsPath = '';
+if (isDevelopment) {
+    walletsPath = path.resolve('./', 'wallets.json');
+} else {
+    walletsPath = process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support/Hades/wallets.json' : `${process.env.APPDATA}\\Hades\\wallets.json`;
+}
+
+// Write wallets json file.
+if (!fs.existsSync(walletsPath)) {
+  fs.writeFile(walletsPath, '[]', function(err) {
+    if (err) throw err;
+  });
+}
+
+function SaveWalletsFile(wallets: string) {
+    fs.writeFile(walletsPath, wallets, function(err) {
+        if (err) throw err;
+    });
+}
+
+function createUniqueId(length: number) {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+async function getWalletDetails(privateKey: string) {
+    return await WalletDetails(privateKey, "", isDevelopment);
+}
+
+function validatePrivateKey(privateKey: string) {
+    return VerifyPrivateKey(privateKey);
+}
+
+//4AKV1vicxgk7jCPfSQHWnn5F3VBMzrxa8mxFpYD27V7tFjHiD82uEd2Zi4sHktQhEATBANsUXF11DvzcuJQHMTWF - Test
+function AddSolanaWalletDialog({ onClose, open, addWallet }: { onClose: any, open: any, addWallet: any }) {
+    const [walletNameValue, setWalletNameValue] = React.useState("");
+    const [privateKeyValue, setPrivateKeyValue] = React.useState("");
+    const [isPrivateKeyValid, setIsPrivateKeyValid] = React.useState(true);
+    const [showAlert, setShowAlert] = React.useState(false);
+    const [alertTypeValue, setAlertTypeValue] = React.useState<any>("");
+    const [alertMessageValue, setAlertMessageValue] = React.useState("");
+
+    const validateAddWallet = () => {
+        return isPrivateKeyValid && walletNameValue !== "";
+    }
+
+    const clearAddSolanaWalletFields = (close: boolean) => {
+        setWalletNameValue('');
+        setPrivateKeyValue('');
+        if (close) {
+            onClose();
+        }
+    }
+  
+    return (
+        <CustomDialog
+          open={open}
+          onClose={() => onClose()}
+          style={{ width: '800px' }}
+        >
+            <CustomDialogTitle
+                onClick={() => onClose()}
+            >
+                Add Solana Wallet
+            </CustomDialogTitle>
+            <DialogContent>
+                <div className="formControl" style={{ flex: 1, display: 'flex' }}>
+                    <div style={{ flex: 0.475 }}>
+                        <CustomInputLabel title={undefined} style={undefined}>Wallet Name*</CustomInputLabel>
+                        <CircularBorderDiv style={undefined}>
+                            <CustomTextField
+                                value={walletNameValue}
+                                onChange={(event: any) => {
+                                    setWalletNameValue(event.target.value);
+                                } }
+                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
+                        </CircularBorderDiv>
+                    </div>
+                    <div style={{ flex: 0.05 }} />
+                    <div style={{ flex: 0.475 }}>
+                        <CustomInputLabel title={undefined} style={undefined}>Private key (leave blank to generate new wallet)</CustomInputLabel>
+                        <CircularBorderDiv style={undefined}>
+                            <CustomTextField
+                                value={privateKeyValue}
+                                onChange={async (event: { target: { value: any; }; }) => {
+                                    if (event.target.value !== '') {
+                                        setPrivateKeyValue(event.target.value);
+                                        const isValidPrivateKey = validatePrivateKey(event.target.value);
+                                        setIsPrivateKeyValid(isValidPrivateKey);
+                                    }
+                                } }
+                                multiline={true}
+                                style={{ fontSize: '13px' }} onBlur={undefined} onKeyPress={undefined} startAdornment={undefined} endAdornment={undefined} disabled={undefined} />
+                        </CircularBorderDiv>
+                        {!isPrivateKeyValid &&
+                            <FormHelperText
+                                style={{ color: thirdColor, fontSize: '11px' }}
+                            >
+                                Incorrect format!
+                            </FormHelperText>
+                        }
+                    </div>
+                </div>
+            </DialogContent>
+            <DialogActions>
+                <CustomButton onClick={() => onClose()} variant={undefined} width={undefined} height={undefined} fontSize={undefined} style={undefined}>Cancel</CustomButton>
+                <CustomButton
+                    onClick={async () => {
+                        if (validateAddWallet()) {
+                            const walletDetails = await getWalletDetails(privateKeyValue);
+                            if (walletDetails != null) {
+                                addWallet(walletNameValue, privateKeyValue, walletDetails.address, walletDetails.balance);
+                                setAlertTypeValue("success");
+                                setAlertMessageValue("Added new wallet!");
+                                clearAddSolanaWalletFields(true);
+                            } else {
+                                setAlertTypeValue("error");
+                                setAlertMessageValue("Issue adding wallet! Try again!");
+                            }
+                        } else {
+                            setAlertTypeValue("error");
+                            setAlertMessageValue("Empty wallet name or invalid private key!");
+                        }
+                        setShowAlert(true);
+                    } } variant={undefined} width={undefined} height={undefined} fontSize={undefined} style={undefined}>
+                    Add Wallet
+                </CustomButton>
+            </DialogActions>
+            <Snackbar open={showAlert} autoHideDuration={3000} onClose={() => setShowAlert(false)}>
+                <Alert elevation={6} variant='filled' color={alertTypeValue}>
+                    {alertMessageValue}
+                </Alert>
+            </Snackbar>
+        </CustomDialog>
+    );
+}
+
+const WalletList = ({ wallets, deleteWallet } : { wallets: any, deleteWallet: any }) => {
+    return (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
+            {wallets.map((x: { walletName: any; address: string; balance: number; id: any; }, index: React.Key | null | undefined) => {
+                return (
+                    <div key={index} style={{ marginRight: wallets.length - 1 === index ? '0px' : '10px' }}>
+                        <WalletItem walletName={x.walletName} walletAddress={`${x.address.substring(0, 4)}...${x.address.substring(x.address.length - 4, x.address.length)}`} solCount={x.balance.toFixed(5)} deleteWallet={() => deleteWallet(x.id)} />
+                    </div>
+                )
+            })}
+        </div>
+    );
+}
+
+const WalletItem = ({ walletName, walletAddress, solCount, deleteWallet } : { walletName: any, walletAddress: any, solCount: any, deleteWallet: any }) => {
+    return (
+        <Paper style={{ display: 'flex', height: '150px', width: '200px', borderRadius: '5px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'row', padding: '10px' }}>
+                <div style={{ flex: 0.6, flexDirection: 'column', display: 'flex' }}>
+                    <div style={{ flex: 0.4, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ fontSize: '12px' }}>
+                            {walletName}
+                        </div>
+                        <div style={{ fontSize: '12px' }}>
+                            {walletAddress}
+                        </div>
+                    </div>
+                    <div style={{ flex: 0.4 }} />
+                    <div style={{ flex: 0.2, display: 'flex' }}>
+                        <label style={{ fontSize: '13px', alignSelf: 'flex-end' }}>
+                            {solCount} SOL
+                        </label>
+                    </div>
+                </div>
+                <div style={{ flex: 0.2, display: 'flex' }} /> 
+                <div style={{ flex: 0.2, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: 0.2 }}>
+                        <img src={solanalogo} style={{ width: '25px', height: '25px' }} />
+                    </div>
+                    <div style={{ flex: 0.6 }} />
+                    <div style={{ flex: 0.2, display: 'flex' }}>
+                        <Tooltip title="Delete Wallet">
+                            <IconButton onClick={() => deleteWallet()} color="inherit" style={{ color: lightModeSecondary, alignSelf: 'flex-end' }}>
+                                <DeleteIcon style={{ width: '20px', height: '20px' }} />
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+                </div>
+            </div>
+        </Paper>
+    );
+}
+
+export default function WalletSection() {
+    const [wallets, setWallets] = React.useState([] as any[]);
+    const [addSolanaWalletOpen, setAddSolanaWalletOpen] = React.useState(false);
+    const [alertTypeValue, setAlertTypeValue] = React.useState<any>("");
+    const [alertMessageValue, setAlertMessageValue] = React.useState("");
+    const [showAlert, setShowAlert] = React.useState(false);
+    
+    useEffect(() => {
+        let walletsRawData = fs.readFileSync(walletsPath);
+	    let walletsJsonData = JSON.parse(walletsRawData.toString());
+        setWallets(walletsJsonData);
+    }, []);
+
+    const addWallet = (walletNameValue: any, privateKeyValue: any, address: any, balance: any) => {
+        var updatedWallets = [];
+        updatedWallets.push({ id: createUniqueId(30), walletName: walletNameValue, privateKey: privateKeyValue, address, balance });
+        updatedWallets = wallets.concat(updatedWallets);
+
+        SaveWalletsFile(JSON.stringify(updatedWallets));
+        setWallets(updatedWallets);
+    }
+
+    const deleteWallet = (id: any) => {
+        var updatedWallets = wallets.filter(x => x.id != id);
+        SaveWalletsFile(JSON.stringify(updatedWallets));
+        setWallets(updatedWallets);
+
+        setAlertTypeValue("success");
+        setAlertMessageValue("Deleted wallet!");
+        setShowAlert(true);
+    }
+
+    return (
+        <React.Fragment>
+            <AppBar position="static" style={{ backgroundColor: darkModePrimary, marginBottom: '15px' }}>
+                <Toolbar>
+                    <Typography>{wallets.length} Wallet{wallets.length > 1 ? "s" : ""}</Typography>
+                    <Grid item xs />
+                    <Tooltip title="Refresh">
+                        <IconButton onClick={() => {}} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
+                            <AutorenewIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Add Wallet">
+                        <IconButton onClick={() => setAddSolanaWalletOpen(true)} color="inherit" className="notDraggable" style={{ color: darkModeSecondary }}>
+                            <AddBoxIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Toolbar>
+            </AppBar>
+            <WalletList wallets={wallets} deleteWallet={(id: any) => deleteWallet(id)} />
+            <AddSolanaWalletDialog open={addSolanaWalletOpen} onClose={() => { setAddSolanaWalletOpen(false) }} addWallet={(walletName: any, privateKey: any, address: any, balance: any) => addWallet(walletName, privateKey, address, balance)} />
+            <Snackbar open={showAlert} autoHideDuration={3000} onClose={() => setShowAlert(false)}>
+                <Alert severity={alertTypeValue}>
+                    {alertMessageValue}
+                </Alert>
+            </Snackbar>
+        </React.Fragment>
+    )
+}
